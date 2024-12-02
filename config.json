@@ -1,0 +1,23 @@
+{
+    "server": {
+      "port": 5000,
+      "cors": {
+        "origin": "http://localhost:3000",
+        "methods": ["GET", "POST"]
+      }
+    },
+    "paths": {
+      "staticFiles": "./public",
+      "resources": "./resources",
+      "chatLogs": "./chat_logs"
+    },
+    "chat": {
+      "maxTime": 90,
+      "pointsAwarded": 7
+    },
+    "logging": {
+      "enabled": true,
+      "logFile": "chat_logs.txt"
+    }
+  }
+  

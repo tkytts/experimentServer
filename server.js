@@ -208,6 +208,7 @@ io.on("connection", (socket) => {
 
     socket.on("set chimes", async (data) => {
         chimesConfig = data;
+        io.emit("chimes updated", chimesConfig);
     });
 
     socket.on("get chimes", async() => {

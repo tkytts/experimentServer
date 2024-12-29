@@ -15,17 +15,22 @@ const io = new Server(server, {
 
 const PORT = config.server.port;
 
+// Check if the file exists
+const filePath = path.join(__dirname, `telemetry_data_${new Date().toISOString().split('T')[0]}.csv`);
+const fileExists = fs.existsSync(filePath);
+
 const csvWriter = createCsvWriter({
-    path: path.join(__dirname, 'telemetry_data.csv'),
+    path: filePath,
     header: [
         { id: 'user', title: 'USER' },
+        { id: 'confederate', title: 'CONFEDERATE' },        
         { id: 'action', title: 'ACTION' },
         { id: 'text', title: 'TEXT' },
         { id: 'timestamp', title: 'TIMESTAMP' },
         { id: 'x', title: 'X' },
         { id: 'y', title: 'Y' },
     ],
-    append: true, // Append to existing file if it exists
+    append: fileExists, // Append to existing file if it exists
 });
 
 
@@ -40,6 +45,8 @@ let pointsAwarded = config.chat.pointsAwarded;
 let currentScore = 0;
 let currentBlockIndex = null;
 let currentProblemIndex = null;
+let gameIsLive = false;
+let chimesConfig = null;
 
 // Load blocks from JSON file
 let blocks = [];
@@ -111,6 +118,13 @@ io.on("connection", (socket) => {
         refreshGameItems();
     });
 
+    socket.on("first block", () => {
+        currentBlockIndex = 0;
+        currentProblemIndex = 0;
+
+        refreshGameItems();
+    })
+
     socket.on("next block", () => {
         if (currentBlockIndex >= 0)
             currentBlockIndex++;
@@ -176,9 +190,30 @@ io.on("connection", (socket) => {
         console.log("Points awarded set to:", points);
     });
 
-    socket.on('telemetry event', async (data) => {
+    socket.on("telemetry event", async (data) => {
         await saveTelemetryData(data);
-      });
+    });
+
+    socket.on("start game", async () => {
+        gameIsLive = true;
+        io.emit("status update", gameIsLive);
+        console.log("Game is live");
+    });
+
+    socket.on("stop game", async () => {
+        gameIsLive = false;
+        io.emit("status update", gameIsLive);
+        console.log("Game is not live");
+    });
+
+    socket.on("set chimes", async (data) => {
+        chimesConfig = data;
+    });
+
+    socket.on("get chimes", async() => {
+        io.emit("chimes updated", chimesConfig);
+        console.log(`Chimes config propagated Message Sent: ${chimesConfig.messageSent}, Message Received: ${chimesConfig.messageReceived}, Timer: ${chimesConfig.timer}`);
+    })
 
     socket.on("disconnect", () => {
         console.log("A user disconnected:", socket.id);

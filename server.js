@@ -65,8 +65,7 @@ app.get("/blocks", (req, res) => {
 });
 
 // Socket.IO connection
-io.on("connection", (socket) => {
-    
+io.on("connection", (socket) => {    
     /**
      * Set participant name.
      * @event set participantName
@@ -180,8 +179,8 @@ io.on("connection", (socket) => {
      * @event next problem
      */
     socket.on("next problem", () => {
-        if (currentProblemIndex)
-            currentProblemIndex = currentProblemIndex++;
+        if (currentProblemIndex != null && currentProblemIndex < 4)
+            currentProblemIndex++;
         else
             currentProblemIndex = 0;
 
@@ -305,6 +304,14 @@ io.on("connection", (socket) => {
         io.emit("set answer", teamAnswer);
     });
 
+    socket.on("block finished", async () => {
+        io.emit("new confederate", "");
+    });
+
+    socket.on("tutorial problem", async (data) => {
+        io.emit("problem update", data);
+    });  
+
     /**
      * Handle user disconnection.
      * @event disconnect
@@ -330,7 +337,7 @@ server.listen(PORT, () => {
  */
 function refreshGameItems() {
     const block = blocks[currentBlockIndex];
-    const problem = block.problems[currentProblemIndex];
+    const problem = block?.problems[currentProblemIndex];
     io.emit("problem update", { block, problem });
 }
 
@@ -374,7 +381,7 @@ function resolveGame() {
             break;
     }
 
-    resolution.correctAnswer = isAnswerCorrect;
+    resolution.isAnswerCorrect = isAnswerCorrect;
     resolution.teamAnswer = teamAnswer;
     resolution.currentScore = currentScore;
 

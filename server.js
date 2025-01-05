@@ -1,3 +1,9 @@
+/**
+ * Express server setup with Socket.IO for real-time communication.
+ * 
+ * @module server
+ */
+
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
@@ -29,6 +35,7 @@ let gameIsLive = false;
 let chimesConfig = null;
 let gameResolutionType = null;
 let teamAnswer = null;
+let participantName = null;
 
 // Load blocks from JSON file
 let blocks = [];
@@ -45,28 +52,54 @@ app.use(cors());
 // Serve static files
 app.use(express.static(path.join(__dirname, "public")));
 
-// Endpoint to fetch blocks
+/**
+ * Endpoint to fetch blocks.
+ * @name /blocks
+ * @function
+ * @memberof module:server
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
+ */
 app.get("/blocks", (req, res) => {
     res.json(blocks);
 });
 
-
 // Socket.IO connection
 io.on("connection", (socket) => {
-    console.log("A user connected:", socket.id);
+    
+    /**
+     * Set participant name.
+     * @event set participantName
+     * @param {string} name - Participant name.
+     */
+    socket.on("set participantName", (name) => {
+        console.log("A user connected:", name);
+        participantName = name;
+    });
 
-    // Chat messages
+    /**
+     * Handle chat messages.
+     * @event chat message
+     * @param {Object} msg - Chat message object.
+     */
     socket.on("chat message", (msg) => {
         messages.push(msg);
         io.emit("chat message", msg); // Broadcast to all clients
     });
 
-    // User typing
+    /**
+     * Handle user typing event.
+     * @event typing
+     * @param {string} username - Username of the person typing.
+     */
     socket.on("typing", (username) => {
         socket.broadcast.emit("user typing", username); // Notify other users
     });
 
-    // Clear chat
+    /**
+     * Clear chat messages and save to a text file.
+     * @event clear chat
+     */
     socket.on("clear chat", () => {
         // Save messages to a text file
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -92,13 +125,23 @@ io.on("connection", (socket) => {
         io.emit("chat cleared");
     });
 
-    // Set confederate
+    /**
+     * Set confederate name.
+     * @event set confederate
+     * @param {string} name - Confederate name.
+     */
     socket.on("set confederate", (name) => {
         confederateName = name;
         io.emit("new confederate", confederateName);
     });
 
-    // Update problem selection
+    /**
+     * Update problem selection.
+     * @event update problem selection
+     * @param {Object} selection - Problem selection object.
+     * @param {number} selection.blockIndex - Block index.
+     * @param {number} selection.problemIndex - Problem index.
+     */
     socket.on("update problem selection", ({ blockIndex, problemIndex }) => {
         currentBlockIndex = blockIndex;
         currentProblemIndex = problemIndex;
@@ -106,13 +149,21 @@ io.on("connection", (socket) => {
         refreshGameItems();
     });
 
+    /**
+     * Select the first block.
+     * @event first block
+     */
     socket.on("first block", () => {
         currentBlockIndex = 0;
         currentProblemIndex = 0;
 
         refreshGameItems();
-    })
+    });
 
+    /**
+     * Select the next block.
+     * @event next block
+     */
     socket.on("next block", () => {
         if (currentBlockIndex >= 0)
             currentBlockIndex++;
@@ -122,8 +173,12 @@ io.on("connection", (socket) => {
         currentProblemIndex = 0;
 
         refreshGameItems();
-    })
+    });
 
+    /**
+     * Select the next problem.
+     * @event next problem
+     */
     socket.on("next problem", () => {
         if (currentProblemIndex)
             currentProblemIndex = currentProblemIndex++;
@@ -131,9 +186,12 @@ io.on("connection", (socket) => {
             currentProblemIndex = 0;
 
         refreshGameItems();
-    })
+    });
 
-    // Timer controls
+    /**
+     * Start the timer.
+     * @event start timer
+     */
     socket.on("start timer", () => {
         countdown = maxTime;
 
@@ -150,17 +208,30 @@ io.on("connection", (socket) => {
         }, 1000);
     });
 
+    /**
+     * Stop the timer.
+     * @event stop timer
+     */
     socket.on("stop timer", () => {
         if (timer)
             clearInterval(timer);
         timer = null;
     });
 
+    /**
+     * Reset the timer.
+     * @event reset timer
+     */
     socket.on("reset timer", () => {
         countdown = maxTime;
         io.emit("timer update", countdown);
     });
 
+    /**
+     * Set the maximum time for the timer.
+     * @event set max time
+     * @param {number} time - Maximum time in seconds.
+     */
     socket.on("set max time", (time) => {
         maxTime = time;
 
@@ -173,59 +244,106 @@ io.on("connection", (socket) => {
         console.log("Max time set to:", time);
     });
 
+    /**
+     * Save telemetry event data.
+     * @event telemetry event
+     * @param {Object} data - Telemetry data object.
+     */
     socket.on("telemetry event", async (data) => {
         await saveTelemetryData(data);
     });
 
+    /**
+     * Start the game.
+     * @event start game
+     */
     socket.on("start game", async () => {
         gameIsLive = true;
         io.emit("status update", gameIsLive);
         console.log("Game is live");
     });
 
+    /**
+     * Stop the game.
+     * @event stop game
+     */
     socket.on("stop game", async () => {
         gameIsLive = false;
         io.emit("status update", gameIsLive);
         console.log("Game is not live");
     });
 
+    /**
+     * Set chimes configuration.
+     * @event set chimes
+     * @param {Object} data - Chimes configuration data.
+     */
     socket.on("set chimes", async (data) => {
         chimesConfig = data;
         io.emit("chimes updated", chimesConfig);
     });
 
+    /**
+     * Get chimes configuration.
+     * @event get chimes
+     */
     socket.on("get chimes", async () => {
         io.emit("chimes updated", chimesConfig);
         console.log(`Chimes config propagated Message Sent: ${chimesConfig?.messageSent}, Message Received: ${chimesConfig?.messageReceived}, Timer: ${chimesConfig?.timer}`);
-    })
+    });
 
+    /**
+     * Set game resolution type and team answer.
+     * @event set game resolution
+     * @param {Object} data - Game resolution data.
+     * @param {string} data.gameResolutionType - Game resolution type.
+     * @param {string} data.teamAnswer - Team answer.
+     */
     socket.on("set game resolution", async (data) => {
         gameResolutionType = data.gameResolutionType;
         teamAnswer = data.teamAnswer;
         io.emit("set answer", teamAnswer);
     });
 
+    /**
+     * Handle user disconnection.
+     * @event disconnect
+     */
     socket.on("disconnect", () => {
         console.log("A user disconnected:", socket.id);
     });
 });
 
-// Start server
+/**
+ * Start the server.
+ * @function
+ * @memberof module:server
+ */
 server.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
 });
 
+/**
+ * Refresh game items and emit problem update.
+ * @function
+ * @memberof module:server
+ */
 function refreshGameItems() {
     const block = blocks[currentBlockIndex];
     const problem = block.problems[currentProblemIndex];
     io.emit("problem update", { block, problem });
 }
 
+/**
+ * Resolve the game and emit game resolution.
+ * @function
+ * @memberof module:server
+ */
 function resolveGame() {
-    let correctAnswer = false;
+    let isAnswerCorrect = false;
     let telemetryData = {
-        user,
-        confederate,
+        user: participantName,
+        confederate: confederateName,
         action: 'game resolved',
         text: null,
         timestamp: new Date().toISOString(),
@@ -234,15 +352,17 @@ function resolveGame() {
         resolution: gameResolutionType,
     }
 
-    let resolution;
+    let resolution = {};
 
     switch (gameResolutionType) {
-        case 'AP', 'DP':
+        case 'AP':
+        case 'DP':
             currentScore += pointsAwarded;
-            correctAnswer = true;
+            isAnswerCorrect = true;
             resolution.pointsAwarded = pointsAwarded;
             break;
-        case 'ANP', 'DNP':
+        case 'ANP':
+        case 'DNP':
             resolution.pointsAwarded = 0;
             break;
         case 'TNP':
@@ -254,7 +374,7 @@ function resolveGame() {
             break;
     }
 
-    resolution.correctAnswer = correctAnswer;
+    resolution.correctAnswer = isAnswerCorrect;
     resolution.teamAnswer = teamAnswer;
     resolution.currentScore = currentScore;
 
@@ -262,7 +382,20 @@ function resolveGame() {
     io.emit("game resolved", resolution);
 }
 
-// Function to save data
+/**
+ * Save telemetry data to a CSV file.
+ * @function
+ * @memberof module:server
+ * @param {Object} data - Telemetry data object.
+ * @param {string} data.user - User name.
+ * @param {string} data.confederate - Confederate name.
+ * @param {string} data.action - Action performed.
+ * @param {string} data.text - Text data.
+ * @param {string} data.timestamp - Timestamp of the event.
+ * @param {number} data.x - X coordinate.
+ * @param {number} data.y - Y coordinate.
+ * @param {string} data.resolution - Resolution type.
+ */
 const saveTelemetryData = async (data) => {
     // Check if the file exists
     let filePath = path.join(__dirname, `telemetry_data_${data.user}_${new Date().toISOString().split('T')[0]}.csv`);

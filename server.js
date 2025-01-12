@@ -64,6 +64,10 @@ app.get("/blocks", (req, res) => {
     res.json(blocks);
 });
 
+app.get("/currentUser", (req, res) => {
+    res.json(participantName);
+});
+
 // Socket.IO connection
 io.on("connection", (socket) => {    
     /**
@@ -310,7 +314,12 @@ io.on("connection", (socket) => {
 
     socket.on("tutorial problem", async (data) => {
         io.emit("problem update", data);
-    });  
+    });
+
+    socket.on("reset points", async () => {
+        currentScore = 0;
+        io.emit("points update", currentScore);
+    });
 
     /**
      * Handle user disconnection.

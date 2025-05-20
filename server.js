@@ -69,7 +69,7 @@ app.get("/currentUser", (req, res) => {
 });
 
 // Socket.IO connection
-io.on("connection", (socket) => {    
+io.on("connection", (socket) => {
     /**
      * Set participant name.
      * @event set participantName
@@ -104,11 +104,20 @@ io.on("connection", (socket) => {
      * @event clear chat
      */
     socket.on("clear chat", () => {
-        // Save messages to a text file
+        const chatLogContent = messages.map(m => `${m.timeStamp} - ${m.user}: ${m.text}`).join("\n");
+        createLogFile("chat_logs", chatLogContent);
+
+        // Clear the chat messages
+        messages = [];
+        io.emit("chat cleared");
+    });
+
+    // Function to create log files
+    function createLogFile(fileNamePrefix, data) {
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
         const dirPath = path.join(__dirname);
-        const filePath = path.join(dirPath, `chat_logs_${timestamp}.txt`);
-        const fileContent = `Chat Log - ${timestamp}\n\n` + messages.map(m => `${m.timeStamp} - ${m.user}: ${m.text}`).join("\n") + "\n\n";
+        const filePath = path.join(dirPath, `${fileNamePrefix}_${timestamp}.txt`);
+        const fileContent = `Log - ${timestamp}\n\n${data}\n\n`;
 
         // Ensure the directory exists
         if (!fs.existsSync(dirPath)) {
@@ -117,16 +126,12 @@ io.on("connection", (socket) => {
 
         fs.writeFile(filePath, fileContent, (err) => {
             if (err) {
-                console.error("Error saving chat log:", err);
+                console.error(`Error saving ${fileNamePrefix} log:`, err);
             } else {
-                console.log("Chat log saved successfully.");
+                console.log(`${fileNamePrefix} log saved successfully.`);
             }
         });
-
-        // Clear the chat messages
-        messages = [];
-        io.emit("chat cleared");
-    });
+    }
 
     /**
      * Set confederate name.
@@ -331,6 +336,12 @@ io.on("connection", (socket) => {
 
     socket.on("clear answer", () => {
         io.emit("set answer", "");
+    });
+
+    socket.on("tutorial done", (numTries) => {
+        const tutorialLogContent = `Timestamp: ${new Date().toISOString()} - Tries: ${numTries}\n\n`;
+        createLogFile("tutorial_logs", tutorialLogContent);
+        io.emit("tutorial done", numTries);
     });
 });
 

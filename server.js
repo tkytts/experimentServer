@@ -17,6 +17,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: config.server.cors,
+    path: '/api/socket.io'
 });
 
 const PORT = config.server.port;
@@ -54,17 +55,17 @@ app.use(express.static(path.join(__dirname, "public")));
 
 /**
  * Endpoint to fetch blocks.
- * @name /blocks
+ * @name /api/blocks
  * @function
  * @memberof module:server
  * @param {Object} req - Express request object.
  * @param {Object} res - Express response object.
  */
-app.get("/blocks", (req, res) => {
+app.get("/api/blocks", (req, res) => {
     res.json(blocks);
 });
 
-app.get("/currentUser", (req, res) => {
+app.get("/api/currentUser", (req, res) => {
     res.json(participantName);
 });
 

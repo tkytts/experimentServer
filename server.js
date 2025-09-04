@@ -344,6 +344,10 @@ io.on("connection", (socket) => {
         createLogFile("tutorial_logs", tutorialLogContent);
         io.emit("tutorial done", numTries);
     });
+
+    socket.on("game ended", () => {
+        io.emit("show end modal", "");
+    });
 });
 
 /**

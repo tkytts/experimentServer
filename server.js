@@ -37,6 +37,7 @@ let chimesConfig = null;
 let gameResolutionType = null;
 let teamAnswer = null;
 let participantName = null;
+let logPath = __dirname + "/logs";
 
 // Load blocks from JSON file
 let blocks = [];
@@ -116,7 +117,7 @@ io.on("connection", (socket) => {
     // Function to create log files
     function createLogFile(fileNamePrefix, data) {
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const dirPath = path.join(__dirname);
+        const dirPath = path.join(logPath);
         const filePath = path.join(dirPath, `${fileNamePrefix}_${timestamp}.txt`);
         const fileContent = `Log - ${timestamp}\n\n${data}\n\n`;
 
@@ -401,12 +402,10 @@ function resolveGame() {
         case 'DNP':
             resolution.pointsAwarded = 0;
             break;
+        default:
         case 'TNP':
             resolution.pointsAwarded = 0;
             teamAnswer = null;
-            break;
-        default:
-            console.log('Unknown game type');
             break;
     }
 
@@ -415,6 +414,8 @@ function resolveGame() {
     resolution.currentScore = currentScore;
 
     saveTelemetryData(telemetryData);
+    gameResolutionType = null;
+    teamAnswer = null;
     io.emit("game resolved", resolution);
 }
 
@@ -434,7 +435,7 @@ function resolveGame() {
  */
 const saveTelemetryData = async (data) => {
     // Check if the file exists
-    let filePath = path.join(__dirname, `telemetry_data_${data.user}_${new Date().toISOString().split('T')[0]}.csv`);
+    let filePath = path.join(logPath, `telemetry_data_${data.user}_${new Date().toISOString().split('T')[0]}.csv`);
     let fileExists = fs.existsSync(filePath);
 
     let csvWriter = createCsvWriter({

@@ -1,3 +1,4 @@
 telemetry_data*.csv
 chat_logs_*.txt
 tutorial_logs_*.txt
+logs/

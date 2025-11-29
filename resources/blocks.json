@@ -52,51 +52,51 @@
     {
       "blockName": "Block_06",
       "problems": [
-        "hl_06",
+        "es_06",
         "el_06",
-        "hsc_06",
         "hn_06",
-        "es_06"
+        "hsc_06",
+        "hl_06"
       ]
     },
     {
       "blockName": "Block_07",
       "problems": [
-        "hl_07",
         "hsc_07",
-        "el_07",
         "hn_07",
+        "hl_07",
+        "el_07",
         "es_07"
       ]
     },
     {
       "blockName": "Block_08",
       "problems": [
-        "hl_08",
-        "hsc_08",
         "es_08",
+        "hn_08",
         "el_08",
-        "hn_08"
+        "hsc_08",
+        "hl_08"
       ]
     },
     {
       "blockName": "Block_09",
       "problems": [
-        "el_09",
-        "es_09",
-        "hl_09",
         "hsc_09",
-        "hn_09"
+        "hn_09",
+        "hl_09",
+        "el_09",
+        "es_09"
       ]
     },
     {
       "blockName": "Block_10",
       "problems": [
+        "hl_10",
         "el_10",
-        "hn_10",
-        "hsc_10",
         "es_10",
-        "hl_10"
+        "hsc_10",
+        "hn_10"
       ]
     }
   ]

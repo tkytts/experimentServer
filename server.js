@@ -434,8 +434,11 @@ function resolveGame() {
  * @param {string} data.resolution - Resolution type.
  */
 const saveTelemetryData = async (data) => {
+    let isConfederateMessage = data.action == "CONFEDERATE MESSAGE";
+    let user = isConfederateMessage ? data.confederate : data.user;
+
     // Check if the file exists
-    let filePath = path.join(logPath, `telemetry_data_${data.user}_${new Date().toISOString().split('T')[0]}.csv`);
+    let filePath = path.join(logPath, `telemetry_data_${user}_${new Date().toISOString().split('T')[0]}.csv`);
     let fileExists = fs.existsSync(filePath);
 
     let csvWriter = createCsvWriter({

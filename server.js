@@ -190,6 +190,14 @@ io.on("connection", (socket) => {
      * @event next problem
      */
     socket.on("next problem", () => {
+        saveTelemetryData({
+            user: participantName,
+            confederate: confederateName,
+            action: 'next problem',
+            text: null,
+            timestamp: new Date().toISOString()
+        });
+
         if (currentProblemIndex != null && currentProblemIndex < 4)
             currentProblemIndex++;
         else

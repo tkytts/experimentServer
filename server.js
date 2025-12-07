@@ -220,6 +220,7 @@ io.on("connection", (socket) => {
                 io.emit("timer update", countdown);
             } else {
                 clearInterval(timer);
+                gameResolutionType = "TNP";
                 resolveGame();
                 timer = null;
             }
